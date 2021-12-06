@@ -1,7 +1,7 @@
 from collections import *
 from typing import *
 
-from util import *
+from util.old import *
 
 
 class Line:

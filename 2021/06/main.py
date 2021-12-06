@@ -1,5 +1,5 @@
 from collections import *
-from util import *
+from util.old import *
 
 
 def cycle(fish, n):

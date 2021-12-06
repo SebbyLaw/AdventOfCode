@@ -1,4 +1,4 @@
-from util import read
+from util.old import read
 
 class Step:
     def __init__(self, s):

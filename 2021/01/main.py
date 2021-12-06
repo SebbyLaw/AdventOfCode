@@ -1,4 +1,4 @@
-from util import read
+from util.old import read
 
 def sol1(inp):
     x = 0

@@ -1,13 +1,21 @@
-from typing import List
+from typing import List, TextIO
 
 __all__ = (
     'Input',
+    'test',
 )
 
+
+def test(expected):
+    def deco(func):
+        func.__aoc_test_expected_result__ = expected
+        return func
+    return deco
+
+
 class Input:
-    def __init__(self, filename: str = 'input'):
-        with open(filename, 'r') as f:
-            self._raw: str = f.read().strip()
+    def __init__(self, file: TextIO):
+        self._raw: str = file.read().strip()
 
     @property
     def raw(self) -> str:

@@ -3,23 +3,18 @@ import datetime
 import logging
 import re
 from html.parser import HTMLParser
-from typing import Union, List, Tuple
+from typing import List, Tuple, Union
 
 import aiohttp
 import discord
 
-from util import get_session
+from util.web import get_session, now, timezone, URL_FMT
 
 log = logging.getLogger()
 
-URL_FMT: str = "https://adventofcode.com/{YEAR}/day/{DAY}"
-
-# AOC timezone: UTC-5
-timezone = datetime.timezone(datetime.timedelta(hours=-5))
-
 
 async def sleep_until_ready(day: int, year: int) -> None:
-    date = datetime.datetime(year, 12, day, 0, 0, 1, tzinfo=timezone)
+    date = datetime.datetime(year, 12, day, 0, 0, 15, tzinfo=timezone)
     log.debug(f"Sleeping until {date}")
     await discord.utils.sleep_until(date)
 
@@ -45,18 +40,22 @@ class AOCParser(HTMLParser):
 
     def __init__(self):
         super().__init__()
-        self.curr_tag: str = ''
+        self.curr: List[str] = []
         self.example_found: bool = False
         self._example: str = ''
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Union[str, None]]]) -> None:
-        self.curr_tag = tag
+        self.curr.append(tag)
 
     def handle_data(self, data: str) -> None:
-        if self.curr_tag == 'p':
+        if not self.curr:
+            return
+
+        if 'p' in self.curr:
             if self.FOR_EXAMPLE.search(data) is not None:
                 self.example_found = True
-        elif self.curr_tag == 'code':
+                return
+        if self.curr[-1] == 'code':
             if self.example_found:
                 self._example = data
                 self.example_found = False
@@ -81,16 +80,18 @@ async def pull_test_input(day: int, year: int, session: aiohttp.ClientSession) -
 
     test_case = parse_input_html(await resp.read())
 
-    with open(f'{year}/{day:02}/test', 'w') as f:
-        f.write(test_case)
+    with open(f'{year}/{day:02}/test', 'wb') as f:
+        f.write(test_case.encode('utf-8'))
 
     log.info("Successfully fetched today's test input!")
 
-async def main() -> None:
+async def main(day: int = None) -> None:
     session = get_session()
-    today = datetime.datetime.now(tz=timezone)
     # add 1 day here, so we can use this script on the first day (November 30)
-    today += datetime.timedelta(days=1)
+    if day is None:
+        today = now() + datetime.timedelta(days=1)
+    else:
+        today = now().replace(day=day)
 
     tasks = [
         pull_input(day=today.day, year=today.year, session=session),
@@ -104,6 +105,6 @@ async def main() -> None:
 
 
 if __name__ == '__main__':
-    # log.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())

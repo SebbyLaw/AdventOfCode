@@ -1,6 +1,5 @@
 import typing
 
-
 T = typing.TypeVar('T')
 Func = typing.Callable[[typing.TextIO], typing.Any]
 

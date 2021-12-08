@@ -18,7 +18,7 @@ async def submit(day: int, year: int, level: Literal[1, 2], answer: Any):
     session = get_session()
 
     try:
-        resp = await session.post(URL_FMT.format(DAY=day, YEAR=year) + '/answer', data={'level': level, 'answer': answer})
+        resp = await session.post(URL_FMT.format(DAY=day, YEAR=year) + '/answer', data={'level': level, 'answer': str(answer)})
         if resp.status != 200:
             print(await resp.text())
             raise
@@ -50,7 +50,7 @@ def run_solution(solution: SolutionFunction, inp: Input, expected_result: Any = 
 
 async def main(day: int = None):
     if day is None:
-        today = now() + datetime.timedelta(days=1)
+        today = now()
     else:
         today = now().replace(day=day)
 
@@ -73,8 +73,7 @@ async def main(day: int = None):
         expected_result = getattr(f, '__aoc_test_expected_result__', None)
         if run_solution(f, test_input, expected_result):
             answer = run_solution(f, real_input)
-            await submit(day=today.day, year=today.year, level=i, answer=answer)
-            print(f"Submitted solution for part {i}!")
+            # await submit(day=today.day, year=today.year, level=i, answer=answer)
 
 
 if __name__ == '__main__':

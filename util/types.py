@@ -1,6 +1,6 @@
 from typing import *
-from .parsing import Input
 
+from .parsing import Input
 
 __all__ = (
     'SolutionFunction',

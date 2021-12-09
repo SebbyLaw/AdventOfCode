@@ -1,3 +1,5 @@
+import collections
+import math
 from typing import List, Tuple
 import functools
 
@@ -17,7 +19,7 @@ def p1(inp: Input):
 
 
 @test(1134)
-def p2(inp: Input):
+def p2_old(inp: Input):
     basins: List[List[Tuple[int, int]]] = []
 
     m = tuple((int(i) for i in line) for line in inp)
@@ -59,3 +61,21 @@ def p2(inp: Input):
 
     keep = reversed(sorted(map(len, keep)))
     return next(keep) * next(keep) * next(keep)
+
+
+@test(1134)
+def p2(inp: Input):
+    grid: Grid[int] = inp.grid(c=int, delimiter='')
+    basins = {}
+
+    def search(node: Node[int], v):
+        if node.coord in basins or node.val == 9:
+            return
+        basins[node.coord] = v
+        for q in node.orthogonal():
+            search(q, v)
+
+    for i, n in enumerate(grid):
+        search(n, i)  # type: ignore # enumerate isn't typed? idk
+
+    return math.prod(c for _, c in collections.Counter(basins.values()).most_common(3))

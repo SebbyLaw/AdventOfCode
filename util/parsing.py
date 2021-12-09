@@ -163,7 +163,7 @@ class Grid(Generic[T]):
         # x + w * y
         return self._elements[coords[0] + self._width * coords[1]]
 
-    def __iter__(self) -> Iterable[Node[T]]:
+    def __iter__(self) -> Iterator[Node[T]]:
         return iter(self._elements)
 
     def rows(self) -> Iterable[Tuple[Node[T], ...]]:

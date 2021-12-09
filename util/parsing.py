@@ -28,3 +28,6 @@ class Input:
     @property
     def chunks(self) -> List[str]:
         return self._raw.split('\n\n')
+
+    def __iter__(self):
+        yield from self.lines

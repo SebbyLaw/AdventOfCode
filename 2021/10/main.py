@@ -44,7 +44,6 @@ points2 = {
 
 @test(288957)
 def p2(inp: Input):
-    bad = set()
     scores = []
     for i, line in enumerate(inp):
         openings = []
@@ -56,23 +55,14 @@ def p2(inp: Input):
                 if expected == char:
                     openings.pop()
                 else:
-                    bad.add(i)
                     break
+        else:
+            score = 0
+            # calculate score
+            for char in reversed(openings):
+                score *= 5
+                score += points2[pairs[char]]
 
-        if i in bad:  # lol
-            continue
-
-        completion = []
-        for char in reversed(openings):
-            com = pairs[char]
-            completion.append(com)
-
-        score = 0
-        # calculate score
-        for char in completion:
-            score *= 5
-            score += points2[char]
-
-        scores.append(score)
+            scores.append(score)
 
     return statistics.median(scores)

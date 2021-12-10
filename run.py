@@ -30,9 +30,9 @@ async def submit(day: int, year: int, level: Literal[1, 2], answer: Any):
 
 def run_solution(solution: SolutionFunction, inp: Input, expected_result: Any = None) -> Optional[bool]:
     try:
-        before = time.time_ns()
+        before = time.perf_counter_ns()
         answer = solution(inp)
-        after = time.time_ns()
+        after = time.perf_counter_ns()
     except:
         traceback.print_exc()
     else:

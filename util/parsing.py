@@ -191,8 +191,8 @@ class Input:
     def chunks(self) -> Tuple[str]:
         return tuple(self._raw.split('\n\n'))
 
-    def __iter__(self):
-        yield from self.lines
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.lines)
 
     def grid(self, *, c: Union[Callable[[str], T], Type[T]] = str, delimiter: str = ',', newline: str = '\n') -> Grid[T]:
         return Grid(self._raw, c=c, delimiter=delimiter, newline=newline)

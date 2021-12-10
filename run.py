@@ -39,7 +39,7 @@ def run_solution(solution: SolutionFunction, inp: Input, expected_result: Any = 
         name = solution.__name__
         length = after - before
 
-        log.debug(f'[ {name} finished in {length}ns ({length / 1000000}ms) {"({} seconds)".format(length / 1000000000) if length > 1000000000 else ""} ]')
+        log.debug(f'[ {name}{"[test]" if expected_result is not None else ""} finished in {length}ns ({length / 1000000}ms) {"({} seconds)".format(length / 1000000000) if length > 1000000000 else ""} ]')
         if expected_result is not None:
             passed = expected_result == answer
             log.debug(f'[ {name} {"PASS" if passed else "FAIL"}: Expected {expected_result}, got {answer} ]')

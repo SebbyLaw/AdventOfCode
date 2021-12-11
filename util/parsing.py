@@ -14,7 +14,12 @@ __all__ = (
 )
 
 
-def test(expected):
+class Null:
+    def __repr__(self) -> str:
+        return 'NULL'
+
+
+def test(expected: Any = Null()):
     def deco(func):
         func.__aoc_test_expected_result__ = expected
         return func
@@ -97,7 +102,7 @@ class Node(Generic[T]):
         return str(self.value)
 
     def __repr__(self) -> str:
-        return f'<Node={self.value} {type(self.value)}>'
+        return f'<Node={self.value} {type(self.value)} at {self.coord}>'
 
     def __eq__(self, other) -> bool:
         return self.value == other.value
@@ -141,9 +146,9 @@ class Grid(Generic[T]):
             if y < self._height - 1:
                 node._south = self[x, y + 1]
                 if node._west is not None:
-                    node._northwest = self[x - 1, y + 1]
+                    node._southwest = self[x - 1, y + 1]
                 if node._east is not None:
-                    node._northeast = self[x + 1, y + 1]
+                    node._southeast = self[x + 1, y + 1]
 
     @property
     def height(self) -> int:

@@ -31,8 +31,6 @@ Number = Union[int, float]
 
 
 class Node(Generic[T]):
-    __slots__ = ('value', )
-
     def __init__(self, value: T):
         self.value = value
 
@@ -52,8 +50,6 @@ class Node(Generic[T]):
 
 
 class GridNode(Node[T]):
-    __slots__ = ('_north', '_west', '_east', '_south', '_northeast', '_northwest', '_southeast', '_southwest', '_coord')
-
     def __init__(self, value: T):
         super().__init__(value)
         self._north: Optional[GridNode[T]] = None

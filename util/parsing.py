@@ -10,7 +10,7 @@ __all__ = (
     'Input',
     'test',
     'Grid',
-    'Node',
+    'GridNode',
 )
 
 
@@ -31,64 +31,10 @@ Number = Union[int, float]
 
 
 class Node(Generic[T]):
-    __slots__ = ('value', '_north', '_west', '_east', '_south', '_northeast', '_northwest', '_southeast', '_southwest', '_coord')
+    __slots__ = ('value', )
 
     def __init__(self, value: T):
-        self.value: T = value
-        self._north: Optional[Node[T]] = None
-        self._west: Optional[Node[T]] = None
-        self._east: Optional[Node[T]] = None
-        self._south: Optional[Node[T]] = None
-        self._northeast: Optional[Node[T]] = None
-        self._northwest: Optional[Node[T]] = None
-        self._southeast: Optional[Node[T]] = None
-        self._southwest: Optional[Node[T]] = None
-        self._coord: Tuple[int, int] = None
-
-    @property
-    def coord(self) -> Tuple[int, int]:
-        return self._coord
-
-    @property
-    def north(self) -> Optional[Node[T]]:
-        return self._north
-
-    @property
-    def west(self) -> Optional[Node[T]]:
-        return self._west
-
-    @property
-    def east(self) -> Optional[Node[T]]:
-        return self._east
-
-    @property
-    def south(self) -> Optional[Node[T]]:
-        return self._south
-
-    @property
-    def northeast(self) -> Optional[Node[T]]:
-        return self._northeast
-
-    @property
-    def northwest(self) -> Optional[Node[T]]:
-        return self._northwest
-
-    @property
-    def southeast(self) -> Optional[Node[T]]:
-        return self._southeast
-
-    def orthogonal(self) -> Iterable[Node[T]]:
-        return filter(None, (self._north, self._east, self._west, self._south))
-
-    def diagonal(self) -> Iterable[Node[T]]:
-        return filter(None, (self._northwest, self._northeast, self._southwest, self._southeast))
-
-    def adjacent(self) -> Iterable[Node[T]]:
-        return itertools.chain(self.orthogonal(), self.diagonal())
-
-    @property
-    def southwest(self) -> Optional[Node[T]]:
-        return self._southwest
+        self.value = value
 
     @property
     def val(self) -> T:
@@ -101,11 +47,72 @@ class Node(Generic[T]):
     def __str__(self) -> str:
         return str(self.value)
 
-    def __repr__(self) -> str:
-        return f'<Node={self.value} {type(self.value)} at {self.coord}>'
-
     def __eq__(self, other) -> bool:
         return self.value == other.value
+
+
+class GridNode(Node[T]):
+    __slots__ = ('_north', '_west', '_east', '_south', '_northeast', '_northwest', '_southeast', '_southwest', '_coord')
+
+    def __init__(self, value: T):
+        super().__init__(value)
+        self._north: Optional[GridNode[T]] = None
+        self._west: Optional[GridNode[T]] = None
+        self._east: Optional[GridNode[T]] = None
+        self._south: Optional[GridNode[T]] = None
+        self._northeast: Optional[GridNode[T]] = None
+        self._northwest: Optional[GridNode[T]] = None
+        self._southeast: Optional[GridNode[T]] = None
+        self._southwest: Optional[GridNode[T]] = None
+        self._coord: Tuple[int, int] = None
+
+    @property
+    def coord(self) -> Tuple[int, int]:
+        return self._coord
+
+    @property
+    def north(self) -> Optional[GridNode[T]]:
+        return self._north
+
+    @property
+    def west(self) -> Optional[GridNode[T]]:
+        return self._west
+
+    @property
+    def east(self) -> Optional[GridNode[T]]:
+        return self._east
+
+    @property
+    def south(self) -> Optional[GridNode[T]]:
+        return self._south
+
+    @property
+    def northeast(self) -> Optional[GridNode[T]]:
+        return self._northeast
+
+    @property
+    def northwest(self) -> Optional[GridNode[T]]:
+        return self._northwest
+
+    @property
+    def southeast(self) -> Optional[GridNode[T]]:
+        return self._southeast
+
+    def orthogonal(self) -> Iterable[GridNode[T]]:
+        return filter(None, (self._north, self._east, self._west, self._south))
+
+    def diagonal(self) -> Iterable[GridNode[T]]:
+        return filter(None, (self._northwest, self._northeast, self._southwest, self._southeast))
+
+    def adjacent(self) -> Iterable[GridNode[T]]:
+        return itertools.chain(self.orthogonal(), self.diagonal())
+
+    @property
+    def southwest(self) -> Optional[GridNode[T]]:
+        return self._southwest
+
+    def __repr__(self) -> str:
+        return f'<Node={self.value} {type(self.value)} at {self.coord}>'
 
 
 class Grid(Generic[T]):
@@ -121,8 +128,8 @@ class Grid(Generic[T]):
 
         lines = string.split(newline)
         self._height: int = len(lines)
-        self._elements: Tuple[Node[T], ...] = tuple(
-            Node(c(v)) for v in itertools.chain.from_iterable(
+        self._elements: Tuple[GridNode[T], ...] = tuple(
+            GridNode(c(v)) for v in itertools.chain.from_iterable(
                 (line.split(delimiter) if delimiter not in ('', None) else iter(line))
                 for line in lines
             )
@@ -161,24 +168,24 @@ class Grid(Generic[T]):
     def __len__(self) -> int:
         return len(self._elements)
 
-    def __contains__(self, item: Any) -> bool:
-        return item in self._elements
-
-    def __getitem__(self, coords: Tuple[int, int]) -> Node[T]:
+    def __getitem__(self, coords: Tuple[int, int]) -> Optional[GridNode[T]]:
         # x + w * y
-        return self._elements[coords[0] + self._width * coords[1]]
+        try:
+            return self._elements[coords[0] + self._width * coords[1]]
+        except IndexError:
+            return None
 
-    def __iter__(self) -> Iterator[Node[T]]:
+    def __iter__(self) -> Iterator[GridNode[T]]:
         return iter(self._elements)
 
-    def rows(self) -> Iterable[Tuple[Node[T], ...]]:
+    def rows(self) -> Iterable[Tuple[GridNode[T], ...]]:
         """Return an iterable of each row"""
         return more_itertools.grouper(self._width, self._elements)
 
-    def columns(self) -> Iterable[Tuple[Node[T], ...]]:
+    def columns(self) -> Iterable[Tuple[GridNode[T], ...]]:
         """Return an iterable of each column"""
-        for y in range(self._height):
-            yield tuple(self[x, y] for x in range(self._width))
+        return (tuple(self[x, y] for x in range(self._width)) for y in range(self._height))
+
 
 class Input:
     def __init__(self, file: typing.TextIO):

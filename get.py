@@ -8,7 +8,7 @@ from typing import List, Tuple, Union
 import aiohttp
 import discord
 
-from util.web import get_session, now, timezone, URL_FMT
+from util.web import URL_FMT, get_session, now, timezone
 
 log = logging.getLogger()
 

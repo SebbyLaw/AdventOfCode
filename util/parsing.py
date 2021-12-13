@@ -6,6 +6,8 @@ from typing import *
 
 import more_itertools
 
+from util._types import Coord
+
 __all__ = (
     'Input',
     'test',
@@ -27,7 +29,6 @@ def test(expected: Any = Null()):
 
 
 T = TypeVar('T')
-Number = Union[int, float]
 
 
 class Node(Generic[T]):
@@ -50,65 +51,59 @@ class Node(Generic[T]):
 
 
 class GridNode(Node[T]):
-    def __init__(self, value: T):
+    def __init__(self, value: T, grid: Grid[T]):
         super().__init__(value)
-        self._north: Optional[GridNode[T]] = None
-        self._west: Optional[GridNode[T]] = None
-        self._east: Optional[GridNode[T]] = None
-        self._south: Optional[GridNode[T]] = None
-        self._northeast: Optional[GridNode[T]] = None
-        self._northwest: Optional[GridNode[T]] = None
-        self._southeast: Optional[GridNode[T]] = None
-        self._southwest: Optional[GridNode[T]] = None
-        self._coord: Tuple[int, int] = None
+        self._grid: Grid[T] = grid
+        self.x: int = None
+        self.y: int = None
 
     @property
-    def coord(self) -> Tuple[int, int]:
-        return self._coord
+    def coord(self) -> Coord:
+        return self.x, self.y
 
     @property
     def north(self) -> Optional[GridNode[T]]:
-        return self._north
+        return self._grid.get((self.x, self.y - 1))
 
     @property
     def west(self) -> Optional[GridNode[T]]:
-        return self._west
+        return self._grid.get((self.x - 1, self.y))
 
     @property
     def east(self) -> Optional[GridNode[T]]:
-        return self._east
+        return self._grid.get((self.x + 1, self.y))
 
     @property
     def south(self) -> Optional[GridNode[T]]:
-        return self._south
+        return self._grid.get((self.x, self.y + 1))
 
     @property
     def northeast(self) -> Optional[GridNode[T]]:
-        return self._northeast
+        return self._grid.get((self.x + 1, self.y - 1))
 
     @property
     def northwest(self) -> Optional[GridNode[T]]:
-        return self._northwest
+        return self._grid.get((self.x - 1, self.y - 1))
 
     @property
     def southeast(self) -> Optional[GridNode[T]]:
-        return self._southeast
-
-    def orthogonal(self) -> Iterable[GridNode[T]]:
-        return filter(None, (self._north, self._east, self._west, self._south))
-
-    def diagonal(self) -> Iterable[GridNode[T]]:
-        return filter(None, (self._northwest, self._northeast, self._southwest, self._southeast))
-
-    def adjacent(self) -> Iterable[GridNode[T]]:
-        return itertools.chain(self.orthogonal(), self.diagonal())
+        return self._grid.get((self.x + 1, self.y + 1))
 
     @property
     def southwest(self) -> Optional[GridNode[T]]:
-        return self._southwest
+        return self._grid.get((self.x - 1, self.y + 1))
+
+    def orthogonal(self) -> Iterable[GridNode[T]]:
+        return filter(None, (self.north, self.east, self.west, self.south))
+
+    def diagonal(self) -> Iterable[GridNode[T]]:
+        return filter(None, (self.northwest, self.northeast, self.southwest, self.southeast))
+
+    def adjacent(self) -> Iterable[GridNode[T]]:
+        return filter(None, (self.northwest, self.north, self.northeast, self.west, self.east, self.southwest, self.south, self.southeast))
 
     def __repr__(self) -> str:
-        return f'<Node={self.value} {type(self.value)} at {self.coord}>'
+        return f'<Node={self.value!r} {type(self.value)} at {self.coord}>'
 
 
 class Grid(Generic[T]):
@@ -125,7 +120,7 @@ class Grid(Generic[T]):
         lines = string.strip().split(newline)
         self._height: int = len(lines)
         self._elements: Tuple[GridNode[T], ...] = tuple(
-            GridNode(c(v)) for v in itertools.chain.from_iterable(
+            GridNode(c(v), self) for v in itertools.chain.from_iterable(
                 (line.split(delimiter) if delimiter not in ('', None) else iter(line))
                 for line in lines
             )
@@ -134,24 +129,7 @@ class Grid(Generic[T]):
 
         # link our nodes
         for i, node in enumerate(self._elements):
-            y, x = divmod(i, self._width)
-            node._coord = (x, y)
-            if x > 0:
-                node._west = self[x - 1, y]
-            if x < self._width - 1:
-                node._east = self[x + 1, y]
-            if y > 0:
-                node._north = self[x, y - 1]
-                if node._west is not None:
-                    node._northwest = self[x - 1, y - 1]
-                if node._east is not None:
-                    node._northeast = self[x + 1, y - 1]
-            if y < self._height - 1:
-                node._south = self[x, y + 1]
-                if node._west is not None:
-                    node._southwest = self[x - 1, y + 1]
-                if node._east is not None:
-                    node._southeast = self[x + 1, y + 1]
+            node.y, node.x = divmod(i, self._width)
 
     @property
     def height(self) -> int:
@@ -164,12 +142,15 @@ class Grid(Generic[T]):
     def __len__(self) -> int:
         return len(self._elements)
 
-    def __getitem__(self, coords: Tuple[int, int]) -> Optional[GridNode[T]]:
+    def __getitem__(self, coords: Coord) -> GridNode[T]:
         # x + w * y
-        try:
-            return self._elements[coords[0] + self._width * coords[1]]
-        except IndexError:
+        return self._elements[coords[0] + self._width * coords[1]]
+
+    def get(self, coords: Coord) -> Optional[GridNode[T]]:
+        x, y = coords
+        if x < 0 or y < 0 or x > self._width - 1 or y > self._height - 1:
             return None
+        return self[coords]
 
     def __iter__(self) -> Iterator[GridNode[T]]:
         return iter(self._elements)
@@ -181,6 +162,9 @@ class Grid(Generic[T]):
     def columns(self) -> Iterable[Tuple[GridNode[T], ...]]:
         """Return an iterable of each column"""
         return (tuple(self[x, y] for y in range(self._height)) for x in range(self._width))
+
+    def __str__(self) -> str:
+        return '\n'.join(''.join(node.value for node in row) for row in self.rows())
 
 
 class Input:

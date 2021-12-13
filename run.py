@@ -4,12 +4,14 @@ import importlib
 import sys
 import time
 import traceback
-from typing import Any, Literal, Optional
+from typing import Any, Callable, Literal, Optional
 
 from termcolor import cprint
 
-from util import Input, SolutionFunction
+from util import Input
 from util.web import URL_FMT, get_session, now
+
+SolutionFunction = Callable[[Input], Any]
 
 
 async def submit(day: int, year: int, level: Literal[1, 2], answer: Any):

@@ -17,7 +17,7 @@ class AStar(Generic[T]):
         return node.adjacent()
 
     @functools.lru_cache(maxsize=None)
-    def _calculate_distance(self, n1: Coord, n2: Coord) -> Number:
+    def _euclidean_distance(self, n1: Coord, n2: Coord) -> Number:
         return math.dist(n1, n2)
 
     @functools.lru_cache(maxsize=None)
@@ -28,7 +28,7 @@ class AStar(Generic[T]):
         return True
 
     def h_cost(self, node: Coord, end: Coord) -> Number:
-        return self._calculate_distance(node, end)
+        return self._euclidean_distance(node, end)
 
     @functools.lru_cache(maxsize=None)
     def solve(self, start: Coord, end: Coord) -> Tuple[List[GridNode[T]], Number]:

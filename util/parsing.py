@@ -122,7 +122,7 @@ class Grid(Generic[T]):
         :param newline: The newline character to separate raw input into lines, by default this is '\n'
         """
 
-        lines = string.split(newline)
+        lines = string.strip().split(newline)
         self._height: int = len(lines)
         self._elements: Tuple[GridNode[T], ...] = tuple(
             GridNode(c(v)) for v in itertools.chain.from_iterable(
@@ -180,7 +180,7 @@ class Grid(Generic[T]):
 
     def columns(self) -> Iterable[Tuple[GridNode[T], ...]]:
         """Return an iterable of each column"""
-        return (tuple(self[x, y] for x in range(self._width)) for y in range(self._height))
+        return (tuple(self[x, y] for y in range(self._height)) for x in range(self._width))
 
 
 class Input:
@@ -192,11 +192,11 @@ class Input:
         return self._raw
 
     @property
-    def lines(self) -> Tuple[str]:
+    def lines(self) -> Tuple[str, ...]:
         return tuple(self._raw.splitlines(keepends=False))
 
     @property
-    def chunks(self) -> Tuple[str]:
+    def chunks(self) -> Tuple[str, ...]:
         return tuple(self._raw.split('\n\n'))
 
     def __iter__(self) -> Iterator[str]:

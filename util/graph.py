@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import functools
+import queue
 from typing import *
 
 from util._types import Number
+from util.errors import NoPathPossible
 from util.parsing import Node
 
 __all__ = (
@@ -46,11 +47,14 @@ class GraphNode(Node[T]):
         return f'<Node ({self.value!r})>'
 
 
+K = TypeVar('K')
+
+
 class Graph(Generic[T]):
     def __init__(self):
-        self._elements: Dict[str, GraphNode[T]] = {}
+        self._elements: Dict[K, GraphNode[T]] = {}
 
-    def add_node(self, value: T) -> GraphNode[T]:
+    def add_node(self, value: K) -> GraphNode[T]:
         if value in self._elements:
             return self._elements[value]
         else:
@@ -58,7 +62,7 @@ class Graph(Generic[T]):
             self._elements[value] = node
             return node
 
-    def add_nodes(self, *values: T, weight: Number = 1) -> Tuple[GraphNode[T], ...]:
+    def add_nodes(self, *values: K, weight: Number = 1) -> Tuple[GraphNode[T], ...]:
         nodes = tuple((v not in self._elements) and GraphNode(v, self) or self._elements[v] for v in values)
         for node in nodes:
             self._elements[node.value] = node
@@ -75,27 +79,35 @@ class Graph(Generic[T]):
     def __getitem__(self, item) -> Optional[GraphNode[T]]:
         return self._elements[item]
 
-    @functools.lru_cache(maxsize=None)
     def dijkstra(self, start: T, end: T) -> Tuple[List[GraphNode[T]], Number]:
         """Returns the shortest path from a starting node and its cost."""
-        unvisited = set(self._elements)
-        dist = {n: float('inf') for n in self._elements}
-        dist[start] = 0
+        dist = {start: 0}
         prev = {}
+
+        unvisited = queue.PriorityQueue()
+        for e, v in self._elements.items():
+            if e != start:
+                dist[e] = float('inf')
+
+            unvisited.put((dist[e], e))
+
         while True:
-            curr = self._elements[min(unvisited, key=dist.get)]
+            try:
+                curr = self._elements[unvisited.get(block=False)[1]]
+            except (ValueError, queue.Empty):
+                raise NoPathPossible() from None
             cv = curr.value
             if cv == end:
                 break
-            unvisited.remove(cv)
             for node, weight in curr.neighbors(True):
                 nv = node.value
                 nw = weight + dist[cv]
                 if nw < dist[nv]:
                     dist[nv] = nw
+                    unvisited.put((dist[nv], nv))
                     prev[nv] = cv
 
-        path = []
+        path = [self._elements[start]]
         step = end
         while step != start:
             path.append(self._elements[step])
